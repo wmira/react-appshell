@@ -85,6 +85,10 @@ const MainAppPane = (props) => (
     </AppWrapper>
 );
 
+MainAppPane.propTypes = {
+    children: PropTypes.node
+};
+
 export const createReactApp = ({store}) => {
 
     return class extends Component {
@@ -98,40 +102,31 @@ export const createReactApp = ({store}) => {
             super(props);
         }
 
-        renderPage = (pageProps, routeProps) => {
-            const PagesElement = findPages(this.props.children);
-            console.log('rendering page ');
-            if ( PagesElement ) {
-                const { pageRenderer } = PagesElement.props;
-                if ( typeof pageRenderer === 'function') {
-                    return pageRenderer({pageProps, routeProps, store });
-                }
+        // renderPage = (pageProps, routeProps) => {
+        //     const PagesElement = findPages(this.props.children);
+        //     if ( PagesElement ) {
+        //         const { pageRenderer } = PagesElement.props;
+        //         if ( typeof pageRenderer === 'function') {
+        //             return pageRenderer({pageProps, routeProps, store });
+        //         }
 
-            }
-            return <div>No Handler for Page render</div>;
-        }
+        //     }
+        //     return <div>No Handler for Page render</div>;
+        // }
 
-        renderPageRouters = () => {
+        renderPages = () => {
 
-
-            if ( this.pageRouters ) {
-                return this.pageRouters;
-            }
             const PagesElement = findPages(this.props.children);
 
-            this.pageRouters = Children.toArray(PagesElement.props.children)
-                .map( page => {
-                    const { path, id, renderer } = page.props;
-                    const pathToUse = path || `/${id}`;
-                    let renderFn = renderer;
-                    if ( !renderFn ) {
-                        renderFn = (routeArgs) => this.renderPage(page.props, routeArgs);
-                    }
-                    console.log('returning router.. ' + pathToUse);
-                    return <Route exact path={pathToUse} key={id} render={renderFn}/>;
-                });
-
-            return this.pageRouters;
+            return Children.toArray(PagesElement.props.children)
+                    .map( page => {
+                        const { path, id, component: ComponentToRender } = page.props;
+                        const pathToUse = path || `/${id}`;
+                        const renderer = (routeProps) => {
+                            return React.createElement(ComponentToRender, { routeProps, store });
+                        };
+                        return <Route path={pathToUse} key={id} render={renderer}/>;
+                    });
 
         }
 
@@ -152,8 +147,8 @@ export const createReactApp = ({store}) => {
                                     <HeaderContainer>
                                         { MainHeaderElement ? MainHeaderElement.props.children : null }
                                     </HeaderContainer>
-                                    <Route path='/' render={ () => (<div>Render</div>)}/>
-                                    { this.renderPageRouters() }
+                                    <Route path='/' render={ () => (<div></div>)}/>
+                                    { this.renderPages() }
                                 </MainView>
                             </MainContainer>
                     </MainAppPane>
